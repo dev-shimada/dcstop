@@ -1,0 +1,18 @@
+{
+    "name": "dcstop-project2",
+    "dockerComposeFile": ["compose.yaml"],
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.Go",
+                "GitHub.copilot"
+            ]
+        }
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder}/,target=/workspace,type=bind"
+    ],
+    "remoteUser": "root"
+}

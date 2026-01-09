@@ -1,0 +1,4 @@
+services:
+  app:
+    image: ghcr.io/dev-shimada/golang-1.25-trixie:latest
+    command: ["sleep", "infinity"]

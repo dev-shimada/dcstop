@@ -1,0 +1,19 @@
+{
+  "name": "dcstop",
+  "image": "ghcr.io/dev-shimada/golang-1.25-trixie:latest",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go",
+        "GitHub.copilot"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/,target=/workspace,type=bind",
+    "source=${env:HOME}/.claude,target=/root/.claude,type=bind",
+    "source=${env:HOME}${env:USERPROFILE}/.aws,target=/root/.aws,readonly,type=bind"
+  ],
+  "remoteUser": "root"
+}

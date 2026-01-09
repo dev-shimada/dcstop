@@ -126,7 +126,7 @@ func resolveContextEndpoint(contextName string) (string, error) {
 
 // contextMeta represents Docker context metadata.
 type contextMeta struct {
-	Name      string                    `json:"Name"`
+	Name      string                     `json:"Name"`
 	Endpoints map[string]contextEndpoint `json:"Endpoints"`
 }
 

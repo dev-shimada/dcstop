@@ -24,7 +24,8 @@ builds:
       - darwin
 
 archives:
-  - format: tar.gz
+  - formats:
+    - tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
@@ -36,7 +37,8 @@ archives:
     # use zip for windows archives
     # format_overrides:
     #   - goos: windows
-    #     format: zip
+    #     formats: 
+    #       - zip
 
 changelog:
   sort: asc
@@ -52,21 +54,10 @@ release:
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
 
-brews:
+homebrew_casks:
   - name: "{{ .ProjectName }}"
-    install: |
-        bin.install "{{ .ProjectName }}"
-        # Install bash completion
-        output = Utils.safe_popen_read("#{bin}/{{ .ProjectName }} completion bash")
-        (bash_completion/"{{ .ProjectName }}").write output
-  
-        # Install zsh completion
-        output = Utils.safe_popen_read("#{bin}/{{ .ProjectName }} completion zsh")
-        (zsh_completion/"_{{ .ProjectName }}").write output
-        
-        # Install fish completion
-        output = Utils.safe_popen_read("#{bin}/{{ .ProjectName }} completion fish")
-        (fish_completion/"{{ .ProjectName }}.fish").write output
+    description: "A CLI tool to easily stop devcontainers"
+    homepage: "https://github.com/dev-shimada/{{ .ProjectName }}"
 
     repository:
       owner: dev-shimada
@@ -79,3 +70,6 @@ brews:
         draft: false
         base:
           branch: main
+
+    binaries: 
+      - "{{ .ProjectName }}"

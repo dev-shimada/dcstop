@@ -3,7 +3,7 @@ module github.com/dev-shimada/dcstop
 go 1.25.3
 
 require (
-	github.com/docker/docker v27.0.0+incompatible
+	github.com/docker/docker v28.0.0+incompatible
 	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1

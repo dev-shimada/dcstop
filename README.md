@@ -18,7 +18,7 @@ VS Code の Dev Containers 拡張機能で作成されたコンテナが「Reope
 
 ### Homebrew
 ```bash
-brew install dev-shimada/dcstop/dcstop
+brew install --casks dev-shimada/dcstop/dcstop
 ```
 
 ### Go install
@@ -37,6 +37,13 @@ go install github.com/dev-shimada/dcstop@latest
 git clone https://github.com/dev-shimada/dcstop.git
 cd dcstop
 go build -o dcstop .
+```
+
+## 補完
+```bash
+dcstop completion bash
+dcstop completion zsh
+dcstop completion fish
 ```
 
 ## 使い方

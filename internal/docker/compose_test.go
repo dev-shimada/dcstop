@@ -187,3 +187,43 @@ func TestDeriveDevcontainerProjectName(t *testing.T) {
 		assert.Equal(t, "myapp", name)
 	})
 }
+
+func TestDeriveProjectNameFromComposeFile(t *testing.T) {
+	t.Run("compose file in .devcontainer - uses parent directory name", func(t *testing.T) {
+		// docker-compose.yml is in .devcontainer directory
+		// /home/user/myproject/.devcontainer/docker-compose.yml
+		composeFilePath := "/home/user/myproject/.devcontainer/docker-compose.yml"
+		name := DeriveProjectNameFromComposeFile(composeFilePath)
+		assert.Equal(t, "myproject_devcontainer", name)
+	})
+
+	t.Run("compose file in .devcontainer subdirectory - uses subdirectory name", func(t *testing.T) {
+		// docker-compose.yml is in .devcontainer/app1 directory
+		// /home/user/myproject/.devcontainer/app1/docker-compose.yml
+		composeFilePath := "/home/user/myproject/.devcontainer/app1/docker-compose.yml"
+		name := DeriveProjectNameFromComposeFile(composeFilePath)
+		assert.Equal(t, "app1", name)
+	})
+
+	t.Run("compose file outside .devcontainer - uses compose file directory name", func(t *testing.T) {
+		// docker-compose.yml is in project root
+		// /home/user/myproject/docker-compose.yml
+		composeFilePath := "/home/user/myproject/docker-compose.yml"
+		name := DeriveProjectNameFromComposeFile(composeFilePath)
+		assert.Equal(t, "myproject", name)
+	})
+
+	t.Run("compose file in subdirectory outside .devcontainer - uses that directory name", func(t *testing.T) {
+		// docker-compose.yml is in docker/ subdirectory
+		// /home/user/myproject/docker/docker-compose.yml
+		composeFilePath := "/home/user/myproject/docker/docker-compose.yml"
+		name := DeriveProjectNameFromComposeFile(composeFilePath)
+		assert.Equal(t, "docker", name)
+	})
+
+	t.Run("converts to lowercase", func(t *testing.T) {
+		composeFilePath := "/home/user/MyProject/Docker/docker-compose.yml"
+		name := DeriveProjectNameFromComposeFile(composeFilePath)
+		assert.Equal(t, "docker", name)
+	})
+}

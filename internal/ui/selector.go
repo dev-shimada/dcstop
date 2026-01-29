@@ -26,7 +26,7 @@ func SelectConfig(configs []*devcontainer.Config) (*devcontainer.Config, error) 
 			configType = "compose"
 		}
 
-		projectName := docker.DeriveDevcontainerProjectName(cfg.ConfigPath)
+		projectName := docker.DeriveProjectNameFromConfig(cfg)
 
 		items[i] = fmt.Sprintf("%s (%s)", projectName, configType)
 	}

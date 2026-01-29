@@ -213,3 +213,35 @@ func DeriveProjectNameFromComposeFile(composeFilePath string) string {
 	// Fallback to compose directory name
 	return strings.ToLower(composeDirName)
 }
+
+// DeriveProjectNameFromComposeFiles derives a compose project name from a list of compose files.
+// It uses the first file in the list to determine the project name.
+// Returns an empty string if the list is empty or nil.
+func DeriveProjectNameFromComposeFiles(composeFiles []string) string {
+	if len(composeFiles) == 0 {
+		return ""
+	}
+	return DeriveProjectNameFromComposeFile(composeFiles[0])
+}
+
+// Config interface represents the minimal interface needed from devcontainer.Config.
+// This interface avoids a direct import dependency on the devcontainer package.
+type Config interface {
+	IsComposeBased() bool
+	GetComposeFiles() []string
+	GetConfigPath() string
+}
+
+// DeriveProjectNameFromConfig derives a compose project name from a devcontainer config.
+// For compose-based configs, it uses the location of the docker-compose file.
+// For image-based configs, it falls back to the devcontainer.json path.
+func DeriveProjectNameFromConfig(cfg Config) string {
+	if cfg.IsComposeBased() {
+		composeFiles := cfg.GetComposeFiles()
+		if len(composeFiles) > 0 {
+			return DeriveProjectNameFromComposeFile(composeFiles[0])
+		}
+	}
+	// Fallback to devcontainer.json path for image-based or when compose files are not found
+	return DeriveDevcontainerProjectName(cfg.GetConfigPath())
+}

@@ -159,8 +159,8 @@ func handleImage(ctx context.Context, client *docker.RealDockerClient, cfg *devc
 func handleCompose(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config) error {
 	ops := docker.NewComposeOps(client)
 
-	// Derive project name from devcontainer.json path
-	projectName := docker.DeriveDevcontainerProjectName(cfg.ConfigPath)
+	// Derive project name from devcontainer config
+	projectName := docker.DeriveProjectNameFromConfig(cfg)
 
 	// Find containers
 	containers, err := ops.FindComposeContainers(ctx, projectName)

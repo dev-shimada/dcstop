@@ -121,3 +121,8 @@ func (c *Config) GetComposeFiles() []string {
 
 	return files
 }
+
+// GetConfigPath returns the path to the devcontainer.json file.
+func (c *Config) GetConfigPath() string {
+	return c.ConfigPath
+}

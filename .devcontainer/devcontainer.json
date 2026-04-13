@@ -1,6 +1,6 @@
 {
   "name": "dcstop",
-  "image": "ghcr.io/dev-shimada/golang-1.25-trixie:latest",
+  "image": "ghcr.io/dev-shimada/golang-1.26.1-trixie:latest",
   "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {

@@ -1,6 +1,6 @@
 module github.com/dev-shimada/dcstop
 
-go 1.25.3
+go 1.26.1
 
 require (
 	github.com/docker/docker v28.5.2+incompatible

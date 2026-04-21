@@ -321,6 +321,27 @@ func TestDeriveProjectNameFromConfig(t *testing.T) {
 		assert.Equal(t, "app1", projectName)
 	})
 
+	t.Run("compose-based config in subdir with compose file in .devcontainer parent", func(t *testing.T) {
+		// .devcontainer/web/devcontainer.json with dockerComposeFile: "../docker-compose.yml"
+		// compose resolves to .devcontainer/docker-compose.yml → project name "devcontainer"
+		tmpDir := t.TempDir()
+		webDir := filepath.Join(tmpDir, ".devcontainer", "web")
+		require.NoError(t, os.MkdirAll(webDir, 0755))
+
+		configPath := filepath.Join(webDir, "devcontainer.json")
+		content := `{
+			"dockerComposeFile": "../docker-compose.yml",
+			"service": "web"
+		}`
+		require.NoError(t, os.WriteFile(configPath, []byte(content), 0644))
+
+		config, err := devcontainer.ParseConfig(configPath)
+		require.NoError(t, err)
+
+		projectName := DeriveProjectNameFromConfig(config)
+		assert.Equal(t, "devcontainer", projectName)
+	})
+
 	t.Run("image-based config falls back to devcontainer.json path", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		devcontainerDir := filepath.Join(tmpDir, ".devcontainer")

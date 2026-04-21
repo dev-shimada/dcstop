@@ -2,14 +2,16 @@ package devcontainer
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
 // FindDevcontainerConfigs searches for devcontainer.json files in the given directory.
-// It looks for:
+// It recursively walks .devcontainer/ and returns every devcontainer.json found at any depth:
 // - .devcontainer/devcontainer.json
-// - .devcontainer/*/devcontainer.json (subdirectories)
+// - .devcontainer/*/devcontainer.json
+// - .devcontainer/**/devcontainer.json (any depth)
 func FindDevcontainerConfigs(dir string) ([]string, error) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		return nil, fmt.Errorf("directory does not exist: %s", dir)
@@ -22,27 +24,17 @@ func FindDevcontainerConfigs(dir string) ([]string, error) {
 		return configs, nil
 	}
 
-	// Check .devcontainer/devcontainer.json
-	mainConfig := filepath.Join(devcontainerDir, "devcontainer.json")
-	if _, err := os.Stat(mainConfig); err == nil {
-		configs = append(configs, mainConfig)
-	}
-
-	// Check .devcontainer/*/devcontainer.json
-	entries, err := os.ReadDir(devcontainerDir)
+	err := filepath.WalkDir(devcontainerDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && filepath.Base(path) == "devcontainer.json" {
+			configs = append(configs, path)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to read .devcontainer directory: %w", err)
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		subConfig := filepath.Join(devcontainerDir, entry.Name(), "devcontainer.json")
-		if _, err := os.Stat(subConfig); err == nil {
-			configs = append(configs, subConfig)
-		}
+		return nil, fmt.Errorf("failed to walk .devcontainer directory: %w", err)
 	}
 
 	return configs, nil

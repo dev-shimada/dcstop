@@ -139,22 +139,15 @@ func (c *ComposeOps) DownComposeProject(ctx context.Context, projectName string,
 //
 //	project name will be "app1"
 func DeriveDevcontainerProjectName(configPath string) string {
-	// Get the directory containing devcontainer.json
 	configDir := filepath.Dir(configPath)
-	// Get the base name of the config directory
 	configDirName := filepath.Base(configDir)
 
-	// Check if devcontainer.json is directly in .devcontainer directory
 	if configDirName == ".devcontainer" {
-		// Standard layout: /foo/bar/.devcontainer/devcontainer.json
-		// Use the parent directory name (bar) + "_devcontainer"
 		parentDir := filepath.Dir(configDir)
 		name := filepath.Base(parentDir)
 		return strings.ToLower(name) + "_devcontainer"
 	}
 
-	// Multi-config layout: /foo/bar/.devcontainer/app1/devcontainer.json
-	// Use the subdirectory name only (app1)
 	return strings.ToLower(configDirName)
 }
 
@@ -173,14 +166,11 @@ func DeriveDevcontainerProjectName(configPath string) string {
 //
 //	project name will be the directory name containing the compose file ("bar" or "docker")
 func DeriveProjectNameFromComposeFile(composeFilePath string) string {
-	// Get the directory containing the compose file
 	composeDir := filepath.Dir(composeFilePath)
 	composeDirName := filepath.Base(composeDir)
 
-	// Check if the path contains .devcontainer
 	pathParts := strings.Split(filepath.Clean(composeFilePath), string(filepath.Separator))
 
-	// Find .devcontainer in the path
 	devcontainerIndex := -1
 	for i, part := range pathParts {
 		if part == ".devcontainer" {
@@ -189,28 +179,22 @@ func DeriveProjectNameFromComposeFile(composeFilePath string) string {
 		}
 	}
 
-	// If .devcontainer is not in the path, use the compose file's directory name
 	if devcontainerIndex == -1 {
 		return strings.ToLower(composeDirName)
 	}
 
-	// If compose file is directly in .devcontainer directory
 	if devcontainerIndex == len(pathParts)-2 {
-		// Get the parent directory of .devcontainer
 		if devcontainerIndex > 0 {
 			parentDirName := pathParts[devcontainerIndex-1]
 			return strings.ToLower(parentDirName) + "_devcontainer"
 		}
 	}
 
-	// If compose file is in a subdirectory of .devcontainer
-	// Use the subdirectory name (the directory immediately after .devcontainer)
 	if devcontainerIndex < len(pathParts)-2 {
 		subdirName := pathParts[devcontainerIndex+1]
 		return strings.ToLower(subdirName)
 	}
 
-	// Fallback to compose directory name
 	return strings.ToLower(composeDirName)
 }
 
@@ -239,7 +223,20 @@ func DeriveProjectNameFromConfig(cfg Config) string {
 	if cfg.IsComposeBased() {
 		composeFiles := cfg.GetComposeFiles()
 		if len(composeFiles) > 0 {
-			return DeriveProjectNameFromComposeFile(composeFiles[0])
+			composeFile := composeFiles[0]
+
+			// Special case: config is in .devcontainer/<sub>/ and compose file is
+			// in .devcontainer/ itself (e.g. ../docker-compose.yml from the subdir).
+			// Docker Compose names the project from the compose file's directory,
+			// stripping leading dots: ".devcontainer" → "devcontainer".
+			configDir := filepath.Dir(cfg.GetConfigPath())
+			composeDir := filepath.Dir(composeFile)
+			if filepath.Base(filepath.Dir(configDir)) == ".devcontainer" &&
+				filepath.Base(composeDir) == ".devcontainer" {
+				return strings.TrimLeft(filepath.Base(composeDir), ".")
+			}
+
+			return DeriveProjectNameFromComposeFile(composeFile)
 		}
 	}
 	// Fallback to devcontainer.json path for image-based or when compose files are not found

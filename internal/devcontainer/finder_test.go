@@ -53,6 +53,28 @@ func TestFindDevcontainerConfigs(t *testing.T) {
 		assert.Contains(t, configs, config3)
 	})
 
+	t.Run("finds devcontainer.json in nested subdirectories", func(t *testing.T) {
+		tmpDir := t.TempDir()
+
+		// .devcontainer/team/project1/devcontainer.json
+		nestedDir1 := filepath.Join(tmpDir, ".devcontainer", "team", "project1")
+		require.NoError(t, os.MkdirAll(nestedDir1, 0755))
+		config1 := filepath.Join(nestedDir1, "devcontainer.json")
+		require.NoError(t, os.WriteFile(config1, []byte(`{"image": "golang:1.21"}`), 0644))
+
+		// .devcontainer/team/project2/devcontainer.json
+		nestedDir2 := filepath.Join(tmpDir, ".devcontainer", "team", "project2")
+		require.NoError(t, os.MkdirAll(nestedDir2, 0755))
+		config2 := filepath.Join(nestedDir2, "devcontainer.json")
+		require.NoError(t, os.WriteFile(config2, []byte(`{"image": "node:18"}`), 0644))
+
+		configs, err := FindDevcontainerConfigs(tmpDir)
+		require.NoError(t, err)
+		assert.Len(t, configs, 2)
+		assert.Contains(t, configs, config1)
+		assert.Contains(t, configs, config2)
+	})
+
 	t.Run("returns empty slice when no devcontainer found", func(t *testing.T) {
 		tmpDir := t.TempDir()
 

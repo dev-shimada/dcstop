@@ -123,7 +123,7 @@ func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDocker
 		return uniqueConfigs[0], nil
 	}
 
-	items := make([]string, len(uniqueConfigs))
+	projects := make([]ui.ProjectItem, len(uniqueConfigs))
 	for i, cfg := range uniqueConfigs {
 		configType := "image"
 		if cfg.IsComposeBased() {
@@ -131,10 +131,15 @@ func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDocker
 		}
 		projectName := docker.DeriveProjectNameFromConfig(cfg)
 		total, running := countContainers(ctx, dockerClient, cfg, projectName)
-		items[i] = fmt.Sprintf("%-40s %-10s %d running / %d total", projectName, configType, running, total)
+		projects[i] = ui.ProjectItem{
+			Name:       projectName,
+			ConfigType: configType,
+			Running:    running,
+			Total:      total,
+		}
 	}
 
-	idx, err := ui.SelectItem("Select devcontainer", items)
+	idx, err := ui.SelectProject("Select devcontainer project to stop", projects)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +150,6 @@ func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDocker
 func handleImage(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config) error {
 	ops := docker.NewContainerOps(client)
 
-	// Find containers by config path
 	containers, err := ops.FindDevcontainersByConfigPath(ctx, cfg.ConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to find containers: %w", err)
@@ -165,19 +169,18 @@ func handleImage(ctx context.Context, client *docker.RealDockerClient, cfg *devc
 		fmt.Printf("  - %s (%s)\n", name, c.ID[:12])
 	}
 
-	// Stop containers
-	if err := ops.StopContainers(ctx, containers); err != nil {
+	if err := ui.RunWithSpinner("Stopping containers...", func() error {
+		return ops.StopContainers(ctx, containers)
+	}); err != nil {
 		return err
 	}
 
 	if downFlag {
-		// Remove containers
-		if err := ops.RemoveContainers(ctx, containers); err != nil {
+		if err := ui.RunWithSpinner("Removing containers...", func() error {
+			return ops.RemoveContainers(ctx, containers)
+		}); err != nil {
 			return err
 		}
-		fmt.Println("Containers stopped and removed successfully")
-	} else {
-		fmt.Println("Containers stopped successfully")
 	}
 	return nil
 }
@@ -185,10 +188,8 @@ func handleImage(ctx context.Context, client *docker.RealDockerClient, cfg *devc
 func handleCompose(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config) error {
 	ops := docker.NewComposeOps(client)
 
-	// Derive project name from devcontainer config
 	projectName := docker.DeriveProjectNameFromConfig(cfg)
 
-	// Find containers
 	containers, err := ops.FindComposeContainers(ctx, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to find compose containers: %w", err)
@@ -212,21 +213,21 @@ func handleCompose(ctx context.Context, client *docker.RealDockerClient, cfg *de
 	}
 
 	if downFlag {
-		// Stop and remove containers, networks, and optionally volumes
-		if err := ops.DownComposeProject(ctx, projectName, volumesFlag); err != nil {
-			return err
-		}
+		label := "Stopping and removing compose project..."
 		if volumesFlag {
-			fmt.Println("Compose project stopped and removed (including volumes) successfully")
-		} else {
-			fmt.Println("Compose project stopped and removed successfully")
+			label = "Stopping and removing compose project (including volumes)..."
+		}
+		if err := ui.RunWithSpinner(label, func() error {
+			return ops.DownComposeProject(ctx, projectName, volumesFlag)
+		}); err != nil {
+			return err
 		}
 	} else {
-		// Just stop containers
-		if err := ops.StopComposeProject(ctx, projectName); err != nil {
+		if err := ui.RunWithSpinner("Stopping compose project...", func() error {
+			return ops.StopComposeProject(ctx, projectName)
+		}); err != nil {
 			return err
 		}
-		fmt.Println("Compose project stopped successfully")
 	}
 
 	return nil

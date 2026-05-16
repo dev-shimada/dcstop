@@ -106,13 +106,17 @@ func runGlobal(cmd *cobra.Command, args []string) error {
 		entries = append(entries, projectEntry{cfg, projectName, configType, total, running})
 	}
 
-	// Build display strings for selector
-	items := make([]string, len(entries))
+	projects := make([]ui.ProjectItem, len(entries))
 	for i, e := range entries {
-		items[i] = fmt.Sprintf("%-40s %-10s %d running / %d total", e.projectName, e.configType, e.running, e.total)
+		projects[i] = ui.ProjectItem{
+			Name:       e.projectName,
+			ConfigType: e.configType,
+			Running:    e.running,
+			Total:      e.total,
+		}
 	}
 
-	selectedIdx, err := ui.SelectItem("Select devcontainer project to stop", items)
+	selectedIdx, err := ui.SelectProject("Select devcontainer project to stop", projects)
 	if err != nil {
 		return err
 	}

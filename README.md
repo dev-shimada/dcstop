@@ -2,14 +2,7 @@
 [![CI](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml/badge.svg)](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/dev-shimada/dcstop/blob/main/LICENSE)
 
-```
- ██████╗   ██████╗ ███████╗ ████████╗  ██████╗  ██████╗
- ██╔══██╗ ██╔════╝ ██╔════╝ ╚══██╔══╝ ██╔═══██╗ ██╔══██╗
- ██║  ██║ ██║      ███████╗    ██║    ██║   ██║ ██████╔╝
- ██║  ██║ ██║      ╚════██║    ██║    ██║   ██║ ██╔═══╝
- ██████╔╝ ╚██████╗ ███████║    ██║    ╚██████╔╝ ██║
- ╚═════╝   ╚═════╝ ╚══════╝    ╚═╝     ╚═════╝  ╚═╝
-```
+<img src="logo.svg" alt="dcstop" />
 
 # dcstop
 
@@ -86,11 +79,31 @@ dcstop global /path/to/projects
 指定ディレクトリ以下のすべての devcontainer プロジェクトを一覧表示し、停止するプロジェクトを選択できます。
 
 ```
-? Select devcontainer project to stop:
-  > workspace_devcontainer          image      1 running / 1 total
-    workspace-node_devcontainer     compose    2 running / 2 total
-    workspace-python_devcontainer   image      0 running / 1 total
+  ██████╗   ██████╗ ███████╗ ████████╗  ██████╗  ██████╗
+  ██╔══██╗ ██╔════╝ ██╔════╝ ╚══██╔══╝ ██╔═══██╗ ██╔══██╗
+  ██║  ██║ ██║      ███████╗    ██║    ██║   ██║ ██████╔╝
+  ██║  ██║ ██║      ╚════██║    ██║    ██║   ██║ ██╔═══╝
+  ██████╔╝ ╚██████╗ ███████║    ██║    ╚██████╔╝ ██║
+  ╚═════╝   ╚═════╝ ╚══════╝    ╚═╝     ╚═════╝  ╚═╝
+
+  Select devcontainer project to stop
+
+  ▸ ● workspace_devcontainer               image     1 running / 1 total
+    ● workspace-node_devcontainer          compose   2 running / 2 total
+    ○ workspace-python_devcontainer        image     0 running / 1 total
+
+  /  filter   ↑/↓  move   enter  select   q  quit
 ```
+
+- `●`（緑）は実行中のコンテナあり、`○`（グレー）は停止中
+- `/` キーで名前を入力して絞り込み検索
+
+| キー | 動作 |
+|------|------|
+| `↑` / `↓` または `Ctrl+P` / `Ctrl+N` | カーソル移動 |
+| `/` | 絞り込み検索 |
+| `Enter` | 選択して停止 |
+| `q` / `Ctrl+C` | キャンセル |
 
 `--down`、`--volumes` フラグも使用できます。
 
@@ -112,17 +125,6 @@ dcstop global /path/to/projects
 3. `~/.docker/config.json` の `currentContext`（`docker context use` で設定）
 4. `DOCKER_HOST` 環境変数
 5. デフォルトの Docker ソケット
-
-### 複数の devcontainer.json がある場合
-
-プロジェクト内に複数の `devcontainer.json` がある場合、インタラクティブに選択できます。
-
-```
-? Select devcontainer:
-  > workspace_devcontainer (image)
-    workspace-node_devcontainer (compose)
-    workspace-python_devcontainer (image)
-```
 
 ## 開発
 

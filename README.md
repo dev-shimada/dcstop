@@ -2,6 +2,15 @@
 [![CI](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml/badge.svg)](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/dev-shimada/dcstop/blob/main/LICENSE)
 
+```
+ ██████╗   ██████╗ ███████╗ ████████╗  ██████╗  ██████╗
+ ██╔══██╗ ██╔════╝ ██╔════╝ ╚══██╔══╝ ██╔═══██╗ ██╔══██╗
+ ██║  ██║ ██║      ███████╗    ██║    ██║   ██║ ██████╔╝
+ ██║  ██║ ██║      ╚════██║    ██║    ██║   ██║ ██╔═══╝
+ ██████╔╝ ╚██████╗ ███████║    ██║    ╚██████╔╝ ██║
+ ╚═════╝   ╚═════╝ ╚══════╝    ╚═╝     ╚═════╝  ╚═╝
+```
+
 # dcstop
 
 DevContainer が作成したコンテナを停止する CLI ツール。
@@ -66,7 +75,24 @@ dcstop -dv /path/to/project
 # Docker context を指定して実行
 dcstop --context my-remote-docker
 dcstop -c desktop-linux /path/to/project
+
+# すべてのプロジェクトを一覧表示してインタラクティブに停止
+dcstop global
+dcstop global /path/to/projects
 ```
+
+### global サブコマンド
+
+指定ディレクトリ以下のすべての devcontainer プロジェクトを一覧表示し、停止するプロジェクトを選択できます。
+
+```
+? Select devcontainer project to stop:
+  > workspace_devcontainer          image      1 running / 1 total
+    workspace-node_devcontainer     compose    2 running / 2 total
+    workspace-python_devcontainer   image      0 running / 1 total
+```
+
+`--down`、`--volumes` フラグも使用できます。
 
 ### オプション
 

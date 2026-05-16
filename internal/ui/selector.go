@@ -69,6 +69,22 @@ func SelectConfig(configs []*devcontainer.Config) (*devcontainer.Config, error) 
 	return uniqueConfigs[idx], nil
 }
 
+// SelectItem prompts the user to select one item from the given list and returns its index.
+func SelectItem(label string, items []string) (int, error) {
+	prompt := promptui.Select{
+		Label: label,
+		Items: items,
+		Size:  10,
+	}
+
+	idx, _, err := prompt.Run()
+	if err != nil {
+		return 0, fmt.Errorf("selection cancelled: %w", err)
+	}
+
+	return idx, nil
+}
+
 // Confirm prompts the user for confirmation.
 func Confirm(message string) (bool, error) {
 	prompt := promptui.Prompt{

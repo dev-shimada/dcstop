@@ -27,10 +27,11 @@ var (
 
 // ProjectItem holds display data for a project selector entry.
 type ProjectItem struct {
-	Name       string
-	ConfigType string // "image" or "compose"
-	Running    int
-	Total      int
+	Name        string
+	ConfigType  string // "image" or "compose"
+	Running     int
+	Total       int
+	LocalFolder string // workspace path (optional)
 }
 
 // ── list item & delegate ──────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ func (p projectListItem) FilterValue() string { return p.project.Name }
 
 type projectDelegate struct{}
 
-func (d projectDelegate) Height() int                               { return 1 }
+func (d projectDelegate) Height() int                               { return 2 }
 func (d projectDelegate) Spacing() int                              { return 0 }
 func (d projectDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
@@ -93,7 +94,11 @@ func (d projectDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		cursor = "▸ "
 	}
 
-	_, _ = fmt.Fprintf(w, "%s%s %s  %s  %s\n", cursor, dot, nameStr, typeStr, countStr)
+	folder := ""
+	if proj.LocalFolder != "" {
+		folder = dimSty.Render("    " + proj.LocalFolder)
+	}
+	_, _ = fmt.Fprintf(w, "%s%s %s  %s  %s\n%s\n", cursor, dot, nameStr, typeStr, countStr, folder)
 }
 
 func truncate(s string, max int) string {

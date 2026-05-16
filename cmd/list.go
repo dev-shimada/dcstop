@@ -65,10 +65,11 @@ func runGlobal(cmd *cobra.Command, args []string) error {
 	items := make([]ui.ProjectItem, len(projects))
 	for i, p := range projects {
 		items[i] = ui.ProjectItem{
-			Name:       p.Name,
-			ConfigType: p.ConfigType,
-			Running:    p.Running(),
-			Total:      len(p.Containers),
+			Name:        p.Name,
+			ConfigType:  p.ConfigType,
+			Running:     p.Running(),
+			Total:       len(p.Containers),
+			LocalFolder: p.LocalFolder,
 		}
 	}
 

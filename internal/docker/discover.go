@@ -5,9 +5,10 @@ import "context"
 // DiscoveredProject represents a devcontainer project found via Docker labels,
 // without requiring devcontainer.json files on disk.
 type DiscoveredProject struct {
-	Name       string
-	ConfigType string // "image" or "compose"
-	Containers []ContainerInfo
+	Name        string
+	ConfigType  string // "image" or "compose"
+	LocalFolder string // devcontainer.local_folder label value
+	Containers  []ContainerInfo
 }
 
 // Running returns the number of running containers in the project.
@@ -44,9 +45,10 @@ func DiscoverProjects(ctx context.Context, client ContainerClient) ([]Discovered
 			p.Containers = append(p.Containers, c)
 		} else {
 			imageProjects[name] = &DiscoveredProject{
-				Name:       name,
-				ConfigType: "image",
-				Containers: []ContainerInfo{c},
+				Name:        name,
+				ConfigType:  "image",
+				LocalFolder: c.Labels["devcontainer.local_folder"],
+				Containers:  []ContainerInfo{c},
 			}
 		}
 	}
@@ -70,9 +72,10 @@ func DiscoverProjects(ctx context.Context, client ContainerClient) ([]Discovered
 			p.Containers = append(p.Containers, c)
 		} else {
 			composeProjects[projectName] = &DiscoveredProject{
-				Name:       projectName,
-				ConfigType: "compose",
-				Containers: []ContainerInfo{c},
+				Name:        projectName,
+				ConfigType:  "compose",
+				LocalFolder: c.Labels["devcontainer.local_folder"],
+				Containers:  []ContainerInfo{c},
 			}
 		}
 	}

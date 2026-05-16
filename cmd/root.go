@@ -116,6 +116,19 @@ func runStop(cmd *cobra.Command, args []string) error {
 	return handleImage(ctx, dockerClient, selectedConfig)
 }
 
+// localFolderFromConfig derives the workspace root from a devcontainer.json path
+// by walking up to find the .devcontainer directory and returning its parent.
+func localFolderFromConfig(configPath string) string {
+	dir := filepath.Dir(configPath)
+	for dir != filepath.Dir(dir) {
+		if filepath.Base(dir) == ".devcontainer" {
+			return filepath.Dir(dir)
+		}
+		dir = filepath.Dir(dir)
+	}
+	return ""
+}
+
 func countContainers(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config, projectName string) (total, running int) {
 	var containers []docker.ContainerInfo
 	var err error
@@ -158,10 +171,11 @@ func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDocker
 		projectName := docker.DeriveProjectNameFromConfig(cfg)
 		total, running := countContainers(ctx, dockerClient, cfg, projectName)
 		projects[i] = ui.ProjectItem{
-			Name:       projectName,
-			ConfigType: configType,
-			Running:    running,
-			Total:      total,
+			Name:        projectName,
+			ConfigType:  configType,
+			Running:     running,
+			Total:       total,
+			LocalFolder: localFolderFromConfig(cfg.ConfigPath),
 		}
 	}
 

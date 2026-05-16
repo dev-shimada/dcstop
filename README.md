@@ -1,3 +1,5 @@
+[English](README_en.md) | 日本語
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/dev-shimada/dcstop)](https://goreportcard.com/report/github.com/dev-shimada/dcstop)
 [![CI](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml/badge.svg)](https://github.com/dev-shimada/dcstop/actions/workflows/CI.yaml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/dev-shimada/dcstop/blob/main/LICENSE)
@@ -71,12 +73,11 @@ dcstop -c desktop-linux /path/to/project
 
 # すべてのプロジェクトを一覧表示してインタラクティブに停止
 dcstop global
-dcstop global /path/to/projects
 ```
 
 ### global サブコマンド
 
-指定ディレクトリ以下のすべての devcontainer プロジェクトを一覧表示し、停止するプロジェクトを選択できます。
+Docker のコンテナラベルを直接参照してすべての devcontainer プロジェクトを一覧表示し、停止するプロジェクトを選択できます。`devcontainer.json` がディスク上になくても動作します。
 
 ```
   ██████╗   ██████╗ ███████╗ ████████╗  ██████╗  ██████╗

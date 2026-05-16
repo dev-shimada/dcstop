@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/dev-shimada/dcstop/internal/devcontainer"
 	"github.com/dev-shimada/dcstop/internal/docker"
 	"github.com/dev-shimada/dcstop/internal/ui"
 	"github.com/spf13/cobra"
@@ -18,13 +16,13 @@ var (
 )
 
 var globalCmd = &cobra.Command{
-	Use:   "global [directory]",
+	Use:   "global",
 	Short: "List all devcontainer projects and optionally stop one",
-	Long: `List all devcontainer projects found in the specified directory (or current directory).
+	Long: `List all devcontainer projects found in Docker and interactively select one to stop.
 
-Shows project name, type (image or compose), and running container count.
-You can then select a project to stop.`,
-	Args: cobra.MaximumNArgs(1),
+Unlike the root command, this does not require devcontainer.json files on disk.
+It discovers projects by inspecting Docker container labels directly.`,
+	Args: cobra.NoArgs,
 	RunE: runGlobal,
 }
 
@@ -36,42 +34,10 @@ func init() {
 }
 
 func runGlobal(cmd *cobra.Command, args []string) error {
+	ui.PrintLogo()
+
 	if globalVolumesFlag && !globalDownFlag {
 		return fmt.Errorf("--volumes requires --down flag")
-	}
-
-	targetDir := "."
-	if len(args) > 0 {
-		targetDir = args[0]
-	}
-
-	absDir, err := filepath.Abs(targetDir)
-	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %w", err)
-	}
-
-	configPaths, err := devcontainer.FindDevcontainerConfigs(absDir)
-	if err != nil {
-		return fmt.Errorf("failed to find devcontainer configs: %w", err)
-	}
-
-	if len(configPaths) == 0 {
-		fmt.Println("No devcontainer.json found")
-		return nil
-	}
-
-	configs := make([]*devcontainer.Config, 0, len(configPaths))
-	for _, path := range configPaths {
-		cfg, err := devcontainer.ParseConfig(path)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", path, err)
-			continue
-		}
-		configs = append(configs, cfg)
-	}
-
-	if len(configs) == 0 {
-		return fmt.Errorf("no valid devcontainer configs found")
 	}
 
 	dockerClient, err := docker.NewClientWithContext(contextFlag)
@@ -86,81 +52,80 @@ func runGlobal(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background()
 
-	// Build summary for display in selector
-	type projectEntry struct {
-		cfg         *devcontainer.Config
-		projectName string
-		configType  string
-		total       int
-		running     int
+	projects, err := docker.DiscoverProjects(ctx, dockerClient)
+	if err != nil {
+		return fmt.Errorf("failed to discover projects: %w", err)
 	}
 
-	entries := make([]projectEntry, 0, len(configs))
-	for _, cfg := range configs {
-		projectName := docker.DeriveProjectNameFromConfig(cfg)
-		configType := "image"
-		if cfg.IsComposeBased() {
-			configType = "compose"
-		}
-		total, running := countContainers(ctx, dockerClient, cfg, projectName)
-		entries = append(entries, projectEntry{cfg, projectName, configType, total, running})
+	if len(projects) == 0 {
+		fmt.Println("No devcontainer projects found")
+		return nil
 	}
 
-	projects := make([]ui.ProjectItem, len(entries))
-	for i, e := range entries {
-		projects[i] = ui.ProjectItem{
-			Name:       e.projectName,
-			ConfigType: e.configType,
-			Running:    e.running,
-			Total:      e.total,
+	items := make([]ui.ProjectItem, len(projects))
+	for i, p := range projects {
+		items[i] = ui.ProjectItem{
+			Name:       p.Name,
+			ConfigType: p.ConfigType,
+			Running:    p.Running(),
+			Total:      len(p.Containers),
 		}
 	}
 
-	selectedIdx, err := ui.SelectProject("Select devcontainer project to stop", projects)
+	selectedIdx, err := ui.SelectProject("Select devcontainer project to stop", items)
 	if err != nil {
 		return err
 	}
 
-	selected := entries[selectedIdx]
+	selected := projects[selectedIdx]
 
-	// Reuse stop logic from root.go, respecting global flags
-	savedDown := downFlag
-	savedVolumes := volumesFlag
-	downFlag = globalDownFlag
-	volumesFlag = globalVolumesFlag
-	defer func() {
-		downFlag = savedDown
-		volumesFlag = savedVolumes
-	}()
-
-	if selected.cfg.IsComposeBased() {
-		return handleCompose(ctx, dockerClient, selected.cfg)
+	if selected.ConfigType == "compose" {
+		return stopComposeByName(ctx, dockerClient, selected.Name)
 	}
-	return handleImage(ctx, dockerClient, selected.cfg)
+	return stopImageContainers(ctx, dockerClient, selected.Containers)
 }
 
-func countContainers(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config, projectName string) (total, running int) {
-	var containers []docker.ContainerInfo
-	var err error
+func stopComposeByName(ctx context.Context, client *docker.RealDockerClient, projectName string) error {
+	ops := docker.NewComposeOps(client)
 
-	if cfg.IsComposeBased() {
-		ops := docker.NewComposeOps(client)
-		containers, err = ops.FindComposeContainers(ctx, projectName)
-	} else {
-		ops := docker.NewContainerOps(client)
-		containers, err = ops.FindDevcontainersByConfigPath(ctx, cfg.ConfigPath)
-	}
+	fmt.Printf("Compose project: %s\n", projectName)
 
-	if err != nil {
-		return 0, 0
-	}
-
-	for _, c := range containers {
-		total++
-		if c.State == "running" {
-			running++
+	if globalDownFlag {
+		label := "Stopping and removing compose project..."
+		if globalVolumesFlag {
+			label = "Stopping and removing compose project (including volumes)..."
 		}
+		return ui.RunWithSpinner(label, func() error {
+			return ops.DownComposeProject(ctx, projectName, globalVolumesFlag)
+		})
+	}
+	return ui.RunWithSpinner("Stopping compose project...", func() error {
+		return ops.StopComposeProject(ctx, projectName)
+	})
+}
+
+func stopImageContainers(ctx context.Context, client *docker.RealDockerClient, containers []docker.ContainerInfo) error {
+	ops := docker.NewContainerOps(client)
+
+	fmt.Printf("Found %d container(s) to stop\n", len(containers))
+	for _, c := range containers {
+		name := ""
+		if len(c.Names) > 0 {
+			name = c.Names[0]
+		}
+		fmt.Printf("  - %s (%s)\n", name, c.ID[:12])
 	}
 
-	return total, running
+	if err := ui.RunWithSpinner("Stopping containers...", func() error {
+		return ops.StopContainers(ctx, containers)
+	}); err != nil {
+		return err
+	}
+
+	if globalDownFlag {
+		return ui.RunWithSpinner("Removing containers...", func() error {
+			return ops.RemoveContainers(ctx, containers)
+		})
+	}
+	return nil
 }

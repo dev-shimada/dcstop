@@ -25,6 +25,11 @@ var sunsetColors = []lipgloss.Color{
 	"#6644F0",
 }
 
+// PrintLogo prints the dcstop logo with a sunset gradient.
+func PrintLogo() {
+	fmt.Println(LogoString())
+}
+
 // LogoString returns the dcstop logo as a sunset-gradient string.
 func LogoString() string {
 	lines := make([]string, len(logoLines))

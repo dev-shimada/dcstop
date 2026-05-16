@@ -116,6 +116,32 @@ func runStop(cmd *cobra.Command, args []string) error {
 	return handleImage(ctx, dockerClient, selectedConfig)
 }
 
+func countContainers(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config, projectName string) (total, running int) {
+	var containers []docker.ContainerInfo
+	var err error
+
+	if cfg.IsComposeBased() {
+		ops := docker.NewComposeOps(client)
+		containers, err = ops.FindComposeContainers(ctx, projectName)
+	} else {
+		ops := docker.NewContainerOps(client)
+		containers, err = ops.FindDevcontainersByConfigPath(ctx, cfg.ConfigPath)
+	}
+
+	if err != nil {
+		return 0, 0
+	}
+
+	for _, c := range containers {
+		total++
+		if c.State == "running" {
+			running++
+		}
+	}
+
+	return total, running
+}
+
 func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDockerClient, configs []*devcontainer.Config) (*devcontainer.Config, error) {
 	uniqueConfigs := ui.DeduplicateConfigs(configs)
 

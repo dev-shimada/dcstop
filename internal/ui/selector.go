@@ -12,6 +12,9 @@ import (
 	"github.com/dev-shimada/dcstop/internal/docker"
 )
 
+// ErrCancelled is returned when the user cancels the selection.
+var ErrCancelled = fmt.Errorf("selection cancelled")
+
 var (
 	titleStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginLeft(2)
 	selectedNameSty = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
@@ -197,7 +200,7 @@ func SelectProject(label string, projects []ProjectItem) (int, error) {
 
 	final := result.(selectModel)
 	if final.cancelled || final.selected < 0 {
-		return 0, fmt.Errorf("selection cancelled")
+		return 0, ErrCancelled
 	}
 	return final.selected, nil
 }

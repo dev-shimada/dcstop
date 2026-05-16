@@ -75,6 +75,9 @@ func runGlobal(cmd *cobra.Command, args []string) error {
 
 	selectedIdx, err := ui.SelectProject("Select devcontainer project to stop", items)
 	if err != nil {
+		if err == ui.ErrCancelled {
+			return nil
+		}
 		return err
 	}
 

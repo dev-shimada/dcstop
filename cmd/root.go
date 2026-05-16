@@ -107,6 +107,9 @@ func runStop(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if selectedConfig == nil {
+		return nil
+	}
 
 	// Handle based on config type
 	if selectedConfig.IsComposeBased() {
@@ -181,6 +184,9 @@ func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDocker
 
 	idx, err := ui.SelectProject("Select devcontainer project to stop", projects)
 	if err != nil {
+		if err == ui.ErrCancelled {
+			return nil, nil
+		}
 		return nil, err
 	}
 

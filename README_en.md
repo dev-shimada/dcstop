@@ -90,8 +90,11 @@ Discovers all devcontainer projects by inspecting Docker container labels direct
   Select devcontainer project to stop
 
   ▸ ● workspace_devcontainer               image     1 running / 1 total
+      /Users/yourname/projects/workspace
     ● workspace-node_devcontainer          compose   2 running / 2 total
+      /Users/yourname/projects/workspace-node
     ○ workspace-python_devcontainer        image     0 running / 1 total
+      /Users/yourname/projects/workspace-python
 
   /  filter   ↑/↓  move   enter  select   q  quit
 ```

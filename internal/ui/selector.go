@@ -8,9 +8,9 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-// deduplicateConfigs removes configs with duplicate project names,
+// DeduplicateConfigs removes configs with duplicate project names,
 // keeping only the first occurrence of each unique project name.
-func deduplicateConfigs(configs []*devcontainer.Config) []*devcontainer.Config {
+func DeduplicateConfigs(configs []*devcontainer.Config) []*devcontainer.Config {
 	if len(configs) <= 1 {
 		return configs
 	}
@@ -36,7 +36,7 @@ func SelectConfig(configs []*devcontainer.Config) (*devcontainer.Config, error) 
 	}
 
 	// Deduplicate configs by project name
-	uniqueConfigs := deduplicateConfigs(configs)
+	uniqueConfigs := DeduplicateConfigs(configs)
 
 	if len(uniqueConfigs) == 1 {
 		return uniqueConfigs[0], nil

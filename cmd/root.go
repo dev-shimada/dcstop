@@ -89,13 +89,7 @@ func runStop(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no valid devcontainer configs found")
 	}
 
-	// Select config if multiple
-	selectedConfig, err := ui.SelectConfig(configs)
-	if err != nil {
-		return err
-	}
-
-	// Create Docker client
+	// Create Docker client before selection to show container counts
 	dockerClient, err := docker.NewClientWithContext(contextFlag)
 	if err != nil {
 		return fmt.Errorf("failed to create docker client: %w", err)
@@ -108,12 +102,44 @@ func runStop(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background()
 
+	// Select config if multiple
+	selectedConfig, err := selectConfigWithCounts(ctx, dockerClient, configs)
+	if err != nil {
+		return err
+	}
+
 	// Handle based on config type
 	if selectedConfig.IsComposeBased() {
 		return handleCompose(ctx, dockerClient, selectedConfig)
 	}
 
 	return handleImage(ctx, dockerClient, selectedConfig)
+}
+
+func selectConfigWithCounts(ctx context.Context, dockerClient *docker.RealDockerClient, configs []*devcontainer.Config) (*devcontainer.Config, error) {
+	uniqueConfigs := ui.DeduplicateConfigs(configs)
+
+	if len(uniqueConfigs) == 1 {
+		return uniqueConfigs[0], nil
+	}
+
+	items := make([]string, len(uniqueConfigs))
+	for i, cfg := range uniqueConfigs {
+		configType := "image"
+		if cfg.IsComposeBased() {
+			configType = "compose"
+		}
+		projectName := docker.DeriveProjectNameFromConfig(cfg)
+		total, running := countContainers(ctx, dockerClient, cfg, projectName)
+		items[i] = fmt.Sprintf("%-40s %-10s %d running / %d total", projectName, configType, running, total)
+	}
+
+	idx, err := ui.SelectItem("Select devcontainer", items)
+	if err != nil {
+		return nil, err
+	}
+
+	return uniqueConfigs[idx], nil
 }
 
 func handleImage(ctx context.Context, client *docker.RealDockerClient, cfg *devcontainer.Config) error {

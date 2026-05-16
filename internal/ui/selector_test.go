@@ -40,7 +40,7 @@ func TestDeduplicateConfigs(t *testing.T) {
 		require.NoError(t, err)
 
 		configs := []*devcontainer.Config{config1, config2}
-		deduplicated := deduplicateConfigs(configs)
+		deduplicated := DeduplicateConfigs(configs)
 
 		// Should only have one config since both reference the same compose file location
 		// and thus have the same project name
@@ -75,7 +75,7 @@ func TestDeduplicateConfigs(t *testing.T) {
 		require.NoError(t, err)
 
 		configs := []*devcontainer.Config{config1, config2}
-		deduplicated := deduplicateConfigs(configs)
+		deduplicated := DeduplicateConfigs(configs)
 
 		// Should have both configs since they have different project names
 		assert.Len(t, deduplicated, 2)
@@ -83,7 +83,7 @@ func TestDeduplicateConfigs(t *testing.T) {
 
 	t.Run("handles empty list", func(t *testing.T) {
 		configs := []*devcontainer.Config{}
-		deduplicated := deduplicateConfigs(configs)
+		deduplicated := DeduplicateConfigs(configs)
 		assert.Len(t, deduplicated, 0)
 	})
 
@@ -99,7 +99,7 @@ func TestDeduplicateConfigs(t *testing.T) {
 		require.NoError(t, err)
 
 		configs := []*devcontainer.Config{config}
-		deduplicated := deduplicateConfigs(configs)
+		deduplicated := DeduplicateConfigs(configs)
 		assert.Len(t, deduplicated, 1)
 	})
 }

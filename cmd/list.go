@@ -34,8 +34,6 @@ func init() {
 }
 
 func runGlobal(cmd *cobra.Command, args []string) error {
-	ui.PrintLogo()
-
 	if globalVolumesFlag && !globalDownFlag {
 		return fmt.Errorf("--volumes requires --down flag")
 	}

@@ -93,7 +93,7 @@ func (d projectDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		cursor = "▸ "
 	}
 
-	fmt.Fprintf(w, "%s%s %s  %s  %s\n", cursor, dot, nameStr, typeStr, countStr)
+	_, _ = fmt.Fprintf(w, "%s%s %s  %s  %s\n", cursor, dot, nameStr, typeStr, countStr)
 }
 
 func truncate(s string, max int) string {

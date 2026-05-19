@@ -108,6 +108,19 @@ func TestParseConfig(t *testing.T) {
 		assert.Nil(t, config)
 	})
 
+	t.Run("handles literal newlines in string values", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, "devcontainer.json")
+		// A devcontainer.json where a string value contains a literal newline
+		// (invalid strict JSON but allowed in JSONC / real-world files).
+		content := "{\"image\": \"golang:1.21\",\n\"name\": \"multi\nline\"}"
+		require.NoError(t, os.WriteFile(configPath, []byte(content), 0644))
+
+		config, err := ParseConfig(configPath)
+		require.NoError(t, err)
+		assert.Equal(t, "golang:1.21", config.Image)
+	})
+
 	t.Run("stores config file path", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "devcontainer.json")

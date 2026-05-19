@@ -76,20 +76,75 @@ func parseDockerComposeFile(data json.RawMessage) ([]string, error) {
 }
 
 // stripJSONC removes comments and trailing commas from JSONC content.
+// It processes the input character-by-character to correctly handle string
+// literals, including literal newlines inside strings (common in JSONC files).
 func stripJSONC(content string) string {
-	// Remove single-line comments (// ...)
-	singleLineComment := regexp.MustCompile(`//[^\n]*`)
-	content = singleLineComment.ReplaceAllString(content, "")
+	var result strings.Builder
+	i := 0
+	for i < len(content) {
+		ch := content[i]
 
-	// Remove multi-line comments (/* ... */)
-	multiLineComment := regexp.MustCompile(`/\*[\s\S]*?\*/`)
-	content = multiLineComment.ReplaceAllString(content, "")
+		switch {
+		case ch == '"':
+			// Copy string literal, escaping any literal newlines/carriage-returns.
+			result.WriteByte(ch)
+			i++
+			for i < len(content) {
+				c := content[i]
+				if c == '\\' {
+					// Escape sequence: copy both characters verbatim.
+					result.WriteByte(c)
+					i++
+					if i < len(content) {
+						result.WriteByte(content[i])
+						i++
+					}
+				} else if c == '"' {
+					result.WriteByte(c)
+					i++
+					break
+				} else if c == '\n' {
+					// Literal newline inside string — replace with \n escape.
+					result.WriteString(`\n`)
+					i++
+				} else if c == '\r' {
+					// Literal CR inside string — skip (paired \r\n already handled).
+					i++
+				} else {
+					result.WriteByte(c)
+					i++
+				}
+			}
+
+		case ch == '/' && i+1 < len(content) && content[i+1] == '/':
+			// Single-line comment: skip until end of line.
+			for i < len(content) && content[i] != '\n' {
+				i++
+			}
+
+		case ch == '/' && i+1 < len(content) && content[i+1] == '*':
+			// Multi-line comment: skip until closing */.
+			i += 2
+			for i < len(content)-1 {
+				if content[i] == '*' && content[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
+
+		default:
+			result.WriteByte(ch)
+			i++
+		}
+	}
 
 	// Remove trailing commas before } or ]
+	cleaned := result.String()
 	trailingComma := regexp.MustCompile(`,(\s*[}\]])`)
-	content = trailingComma.ReplaceAllString(content, "$1")
+	cleaned = trailingComma.ReplaceAllString(cleaned, "$1")
 
-	return strings.TrimSpace(content)
+	return strings.TrimSpace(cleaned)
 }
 
 // IsImageBased returns true if the config uses an image directly.
